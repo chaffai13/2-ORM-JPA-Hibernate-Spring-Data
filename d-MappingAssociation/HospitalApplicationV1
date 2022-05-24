@@ -1,0 +1,87 @@
+package com.chaffai.dMappingAssociationHeritage;
+
+import java.util.Date;
+import java.util.stream.Stream;
+
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+
+import com.chaffai.dMappingAssociationHeritage.entities.Consultation;
+import com.chaffai.dMappingAssociationHeritage.entities.Medecin;
+import com.chaffai.dMappingAssociationHeritage.entities.Patient;
+import com.chaffai.dMappingAssociationHeritage.entities.RendezVous;
+import com.chaffai.dMappingAssociationHeritage.entities.StatusRDV;
+import com.chaffai.dMappingAssociationHeritage.repositories.ConsultationRepository;
+import com.chaffai.dMappingAssociationHeritage.repositories.MedecinRepository;
+import com.chaffai.dMappingAssociationHeritage.repositories.PatientRepository;
+import com.chaffai.dMappingAssociationHeritage.repositories.RendezVousRepository;
+
+@SpringBootApplication
+public class DMappingAssociationHeritageApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(DMappingAssociationHeritageApplication.class, args);
+	}
+
+	//La méthode qui utilise l'annotation "@Bean" => une méthode qui s"exécute au démarrage 
+	//Cette méthode va retourner un objet qui devient un composant Spring
+	@Bean
+	CommandLineRunner start(PatientRepository patientRepository,
+							MedecinRepository medecinRepository,
+							RendezVousRepository rendezVousRepository,
+							ConsultationRepository consultationRepository) {
+
+		return args -> {
+			
+			// 1) Ajouter des Patients
+			Stream.of("Mohammed", "Farid", "Amelie").forEach(name -> {
+				Patient patient = new Patient();
+				patient.setNom(name);
+				patient.setDateNaissance(new Date());
+				patient.setMalade(false);
+
+				patientRepository.save(patient);
+			});
+
+			// 2) Ajouter des Médecins
+			Stream.of("Jacob", "Detouche", "Solange").forEach(name -> {
+				Medecin medecin = new Medecin();
+				medecin.setNom(name);
+				medecin.setEmail(name + "@gmail.com");
+				medecin.setSpecialite(Math.random() > 0.5 ? "Cardio" : "Dentiste");
+
+				medecinRepository.save(medecin);
+			});
+
+			// 3) Ajouter un Rendez-vous
+
+			// Chercher un Patient
+			Patient patient = patientRepository.findById(2L).orElse(null);
+			Patient patient1 = patientRepository.findByNom("Mohammed");
+
+			/// Chercher un Médecin
+			Medecin medecin = medecinRepository.findByNom("Detouche");
+
+			// Créer un RendezVous
+			RendezVous rendezVous = new RendezVous();
+			rendezVous.setDateRDV(new Date());
+			rendezVous.setStatus(StatusRDV.PENDING);
+			rendezVous.setMedecin(medecin);
+			rendezVous.setPatient(patient);
+			rendezVousRepository.save(rendezVous);
+			
+			//3) Ajouter une Consultation
+			//RendezVous rendezVous1 = rendezVousRepository.findById(1L).orElse(null);
+			RendezVous rendezVous1 = rendezVousRepository.findAll().get(0);
+			Consultation consultation = new Consultation();
+			consultation.setDateConsultation(new Date());
+			consultation.setRendezVous(rendezVous1);
+			consultation.setRapport("Rapport de consultation Rendez-Vous N°= 1");
+			consultationRepository.save(consultation);
+			
+		};
+
+	}
+}
